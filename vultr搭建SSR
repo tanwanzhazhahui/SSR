@@ -1,6 +1,15 @@
 安装 ssr 软件
 wget -N --no-check-certificate https://softs.fun/Bash/ssr.sh && chmod +x ssr.sh && bash ssr.sh
 
+复制上面的代码到VPS服务器里，安装脚本后，以后只需要运行bash ssr.sh这个快捷命令就可以出现下图的界面进行设置管理了 
+
+如上图出现管理界面后，输入数字1来安装SSR服务端。
+
+如果输入1后不能进入下一步，那么请重新连接VPS服务器，然后输入快捷管理命令 bash ssr.sh 再尝试
+
+选择端口直接回车选择默认的就好了。当然了，你也可以设置其他的端口，这个根据个人需求 
+
+
 加速服务器 (谷歌BBR加速)
 wget --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh
 
