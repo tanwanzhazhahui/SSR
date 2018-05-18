@@ -106,6 +106,8 @@ curl www.google.com
 
 如果还是不能上网： 重启polipo： /etc/init.d/polipo restart。
 
+本文转自https://www.jianshu.com/p/a0f3268bfa33，希望作者别打我，我也是留下来应急。
+
 
 
 
