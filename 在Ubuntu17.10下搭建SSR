@@ -1,0 +1,122 @@
+1、下载ssr客户端
+git clone https://github.com/ssrbackup/shadowsocksr
+
+2、配置ss文件
+进入刚刚clone下来的文件夹，有一个文件叫config.json/user-config.json，这是配置文件的模板，复制一份到/etc/shadowsocks.json
+
+然后对这个文件进行配置：sudo gedit /etc/shadowsocks.json
+
+用下面替换该文件中的内容（具体的服务器地址，端口，密码，加密方式，协议插件，混淆插件从SS帐号提供商那里获取。）：
+至于具体服务器，我是上vultr购买的，这个因人而异；
+
+{
+    "server": "服务器的ip",
+    "server_ipv6": "::",
+    "server_port": 服务器端口,
+    "local_address": "127.0.0.1",
+    "local_port": 1080,
+
+    "password": "服务器的密码",
+    "method": "加密方式",
+    "protocol": "协议插件",
+    "protocol_param": "",
+    "obfs": "混淆插件",
+    "obfs_param": "",
+    "speed_limit_per_con": 0,
+    "speed_limit_per_user": 0,
+
+    "additional_ports" : {},
+    "timeout": 120,
+    "udp_timeout": 60,
+    "dns_ipv6": false,
+    "connect_verbose_info": 0,
+    "redirect": "",
+    "fast_open": false
+}
+
+3、启动ssr客户端
+python ~/shadowsocksr/shadowsocks/local.py -c /etc/shadowsocks.json    
+
+注：如果出现以下错误：
+IPv6 support Traceback (most recent call last): File "local.py", line 81, in <module> main() File "local.py", line 43, in main config = shell.get_config(True) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/shell.py", line 299, in get_config check_config(config, is_local) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/shell.py", line 129, in check_config encrypt.try_cipher(config['password'], config['method']) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/encrypt.py", line 46, in try_cipher Encryptor(key, method) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/encrypt.py", line 90, in __init__ random_string(self._method_info[1])) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/encrypt.py", line 119, in get_cipher return m[2](method, key, iv, op) File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/crypto/sodium.py", line 71, in __init__ load_libsodium() File "/home/miliimoulins/shadowsocksr/shadowsocks/../shadowsocks/crypto/sodium.py", line 42, in load_libsodium raise Exception('libsodium not found') Exception: libsodium not found
+
+因为当前Python版本为系统自带python 2.7，缺很多东西。将python默认版本改为anaconda python 3
+
+1.从官网下载Anaconda3-5.1.0-Linux-x86_64.sh。
+https://www.anaconda.com/download/#linux
+
+2.sh Anaconda3-5.1.0-Linux-x86_64.sh   # 切到该目录下，安装
+
+3.更改python默认版本为anaconda3：
+sudo gedit ~/.bashrc   # 编辑 .bashrc 文件
+在最后一行添加： export PATH=~/anaconda3/bin:$PATH ，保存。然后：source ~/.bashrc
+
+4.执行： python ~/shadowsocksr/shadowsocks/local.py -c /etc/shadowsocks.json 
+然后会显示
+IPv6 support 2018-04-20 15:53:35 INFO util.py:85 loading libsodium from /home/miliimoulins/anaconda3/lib/libsodium.so.23 2018-04-20 15:53:35 INFO local.py:50 local start with protocol[auth_sha1_v4] password [b'jfahtt'] method [chacha20] obfs [http_simple] obfs_param [] 2018-04-20 15:53:35 INFO local.py:54 starting local at 127.0.0.1:1080 2018-04-20 15:53:35 INFO asyncdns.py:324 dns server: [('127.0.0.1', 53)]
+
+
+这时候快完成了，接下来要转换HTTP代理
+Shadowsocks默认是用Socks5协议的，对于Terminal的get,wget等走http协议的地方是无能为力的，所以需要转换成http代理，加强通用性，这里使用的转换方法是基于Polipo的
+
+sudo apt-get install polipo      # 安装Polipo
+sudo gedit /etc/polipo/config    # 修改配置文件
+
+将下面的内容整个替换到文件中并保存：
+
+# This file only needs to list configuration variables that deviate
+# from the default values.  See /usr/share/doc/polipo/examples/config.sample
+# and "polipo -v" for variables you can tweak and further information.
+
+logSyslog = false    
+logFile = "/var/log/polipo/polipo.log"    
+    
+proxyAddress = "0.0.0.0"
+proxyPort = 8123    
+    
+socksParentProxy = "127.0.0.1:1080"    
+socksProxyType = socks5    
+    
+chunkHighMark = 50331648    
+objectHighMark = 16384    
+    
+serverMaxSlots = 64    
+serverSlots = 16    
+serverSlots1 = 32   
+
+
+重启Polipo:
+/etc/init.d/polipo restart
+
+验证代理是否正常工作：
+export http_proxy="http://127.0.0.1:8123/"
+curl www.google.com
+
+如果正常，就会返回抓取到的Google网页内容。此时，终端里面可以访问外网了。
+另外，在浏览器中输入http://127.0.0.1:8123/便可以进入到Polipo的使用说明和配置界面。
+
+之后就要配置网络
+打开Ubuntu17.10的设置>网络>网络代理
+选择>手动
+下面都设置为：127.0.0.1 端口：8123
+关闭
+
+在终端输入python ~/shadowsocksr/shadowsocks/local.py -c /etc/shadowsocks.json开启服务，这时就可以上外网了
+关闭终端则无法上，建议下个终端终结者多开终端。后台运行
+
+如果还是不能上网： 重启polipo： /etc/init.d/polipo restart。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
