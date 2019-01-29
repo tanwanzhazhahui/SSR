@@ -42,6 +42,24 @@ IPv6 support Traceback (most recent call last): File "local.py", line 81, in <mo
 
 因为当前Python版本为系统自带python 2.7，缺很多东西。将python默认版本改为anaconda python 3
 
+
+如果自带python3
+       
+       打开终端分别输入下面两条命令：
+
+       update-alternatives --install /usr/bin/python python /usr/bin/python2 100
+
+       update-alternatives --install /usr/bin/python python /usr/bin/python3 150
+
+       然后打开终端输入：python --version
+
+       如果没有错误的话，此时python版本应该切换到默认的python3了。
+
+       如果需要重新切换回python只需要在终端输入：update-alternatives --config python
+
+       然后选者你需要的python版本，输入序号回车就可以了
+
+否则
 1.从官网下载Anaconda3-5.1.0-Linux-x86_64.sh。
 https://www.anaconda.com/download/#linux
 
